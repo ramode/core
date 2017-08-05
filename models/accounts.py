@@ -9,29 +9,48 @@ DEBITING_METHODS = [
 ]
 
 SERVICE_STATE = [
-    (0,'off'),
-    (1,'on'),
-    (2,'suspend') #не включать при пополнении баланса
+    (0,'on'), # доступна
+    (1,'admin off'), # запрещенна админом, включается админом
+    (2,'suspend'), # не включать при пополнении баланса, включается пользователем
+    (3,'block') # включать при пополнении баланса
 ]
 
 class Account(BaseModel):
     consumer = PrimaryKeyField()
-    provider = ForeignKeyField(Account, to_field='consumer', related_name='consumers')
+    provider = ForeignKeyField(self, to_field='consumer', related_name='consumers')
     form = CharField()
     personal_data = HStoreField()
     balance = CurrencyField()
     deleted = BooleanField(default=False)
 
 
+from .nases import Nas
+from .constants import SERVICE_TYPE
+
 class Service(BaseModel):
     account = ForeignKeyField(Account, related_name='services')
     type = CharField()
+    access = ForeignKeyField(Nas, related_name='services')
+
     check = HStoreField()
     respond = HStoreField()
+    location = HStoreField() # адрес
+
     debiting = SmallIntegerField(choices = DEBITING_METHODS)
     state = SmallIntegerField(choices = SERVICE_STATE)
-    start = CurrencyField()
-    stop = CurrencyField()
+    start_at = CurrencyField()
+    stop_at = CurrencyField()
+    cost = CurrencyField()
+
+    @post_save(sender=Service)
+    def on_change(model_class, instance, created):
+        ServiceChange.insert(service=instance.id, state=instance.state)
+
+class ServiceChange(BaseModel):
+    service = ForeignKeyField(Service)
+    date = DateTimeField(default = datetime.datetime.now)
+    state = SmallIntegerField(choices = SERVICE_STATE)
+
 
 class Balance(BaseModel):
     account = ForeignKeyField(Account, related_name='balances')
