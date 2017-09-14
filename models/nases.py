@@ -1,9 +1,6 @@
 from .base import *
 
-NAS_TYPE = [
-    ('radius','Radius')
-]
-from .constants import SERVICE_TYPE
+from .constants import *
 
 class Nas(BaseModel):
     type = CharField(choices=NAS_TYPE)

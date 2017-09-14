@@ -1,0 +1,6 @@
+uvloop
+peewee
+pycrypto
+psycopg2
+aiozmq
+msgpack-python
