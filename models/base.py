@@ -1,10 +1,10 @@
 from peewee import *
 from playhouse.postgres_ext import *
 from playhouse.signals import Model, post_save
+from playhouse.pool import PooledPostgresqlExtDatabase
 import datetime
 
-psql_db = PostgresqlDatabase('billing')
-
+psql_db = PooledPostgresqlExtDatabase('billing')
 
 class BaseModel(Model):
     """A base model that will use our Postgresql database"""

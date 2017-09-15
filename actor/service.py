@@ -2,7 +2,6 @@ if "__main__" in __name__:
     import sys
     sys.path.insert(0,'..')
 
-
 import models.accounts
 import asyncio
 import uvloop

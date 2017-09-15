@@ -2,5 +2,5 @@ uvloop
 peewee
 pycrypto
 psycopg2
-aiozmq
+aioamqp
 msgpack-python
