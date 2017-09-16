@@ -9,7 +9,10 @@ async def new_user(self, provider:int, personal_data:dict):
 
     database = models.accounts.Account.Meta.database
     with database.atomic():
-        account = models.accounts.Account.create(provider=provider,personal_data=personal_data)
+        account = models.accounts.Account.create(
+            provider=provider,
+            personal_data=personal_data
+            ).execute()
         check = {
             'login': str(account).zfill(8),
             'password': keygen(6)
@@ -17,17 +20,23 @@ async def new_user(self, provider:int, personal_data:dict):
         respond = {
             'rights': ['cabinet','help']
         }
-        lk = models.accounts.Service.create(account=account,type="web-user",access=None,check=check,respond=respond)
+        lk = models.accounts.Service.create(
+            account=account,
+            type="web-user",
+            access=None,
+            check=check,
+            respond=respond
+            ).execute()
 
     yield account
 
 
 async def get_user(self, provider:int, consumer:int):
-    yield models.accounts.Account.get((Account.provider == provider) & (Account.consumer == consumer))
+    yield models.accounts.Account.get((Account.provider == provider) & (Account.consumer == consumer)).execute()
 
 
 async def list_users(self, provider:int):
-    for row in  models.accounts.Account.select().where(Account.provider == provider & Account.deleted == False):
+    for row in  models.accounts.Account.select().where(Account.provider == provider & Account.deleted == False).execute():
         yield row
 
 

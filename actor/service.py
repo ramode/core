@@ -2,6 +2,7 @@ if "__main__" in __name__:
     import sys
     sys.path.insert(0,'..')
 
+import models
 import models.accounts
 import asyncio
 import uvloop
@@ -21,6 +22,8 @@ class Actor:
 if "__main__" in __name__:
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     loop=asyncio.get_event_loop()
+
+    models.psql_db.init('billing', host='127.0.0.1')
 
     a=Actor()
 

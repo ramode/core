@@ -2,7 +2,7 @@ if "__main__" in __name__:
     import sys
     sys.path.insert(0,'..')
 
-import models.accounts
+import models
 
 import asyncio
 import uvloop
@@ -50,6 +50,8 @@ def bind(protocol):
     return bind_inner
 
 async def go():
+
+    models.psql_db.init('billing', host='127.0.0.1')
 
     transport, protocol = await aioamqp.connect()
     binder = bind(protocol)
