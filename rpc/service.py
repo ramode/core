@@ -9,46 +9,18 @@ import uvloop
 import aioamqp
 import msgpack
 import string
-
-def keygen(l):
-    return "".join([random.choice(string.ascii_lowercase+string.digits) for i in range(l)])
-
-"""
-class ServerHandler(aiozmq.rpc.AttrHandler):
-    @aiozmq.rpc.method
-    def new_user(self, provider:int, personal_data:dict) -> int:
-        database = models.accounts.Account.Meta.database
-        with database.atomic():
-            account = models.accounts.Account.create(provider=provider,personal_data=personal_data)
-
-            check = {
-                'login': str(account).zfill(8),
-                'password': keygen(6)
-                }
-            respond = {
-                'rights': ['cabinet','help']
-            }
-            lk = models.accounts.Service.create(account=account,type="web-user",access=None,check=check,respond=respond)
-
-        return account.consumer
-
-    @aiozmq.rpc.method
-    def user(self,provider:int, consumer:int) -> dict:
-        return models.accounts.Account.get((Account.provider == provider) & (Account.consumer == consumer))
-
-
-    @aiozmq.rpc.method
-    def users(self,provider:int) -> list:
-        return models.accounts.Account.select().where(Account.provider == provider)
-"""
+import types
 
 
 def rpc(cb):
     async def rpc_inner(channel, body, envelope, properties):
-        print(body)
-        body = msgpack.unpackb(body)
+        args = msgpack.unpackb(body)
+        if type(args) == list:
+            generator = cb(*args)
+        if type(args) == dict:
+            generator = cb(**args)
 
-        async for i in cb(body):
+        async for i in generator:
             response = msgpack.packb(i)
             await channel.basic_publish(
                 payload = response,
@@ -63,20 +35,32 @@ def rpc(cb):
     return rpc_inner
 
 
-@rpc
-async def accounts_cb(body):
+
+async def test_cb(body):
     print (body)
     for i in range(110):
         yield i
 
 
-
+def bind(protocol):
+    async def bind_inner(cb,name):
+        channel = await protocol.channel()
+        await channel.queue(name)
+        await channel.basic_consume(rpc(cb), queue_name=name)
+    return bind_inner
 
 async def go():
+
     transport, protocol = await aioamqp.connect()
-    channel = await protocol.channel()
-    await channel.queue('accounts')
-    await channel.basic_consume(accounts_cb, queue_name='accounts')
+    binder = bind(protocol)
+
+    await binder(test_cb,"test")
+
+    import callbacks
+
+    for modulename, module in filter(lambda x: type(x[1]) == types.ModuleType, callbacks.__dict__.items()):
+        for name,callback in filter(lambda x: type(x[1]) == types.FunctionType, module.__dict__.items()):
+            await binder(callback,"%s.%s" % (modulename, name))
 
 
     return transport, protocol
