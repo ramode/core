@@ -1,2 +1,3 @@
-import callbacks.consumers as consumers
+from callbacks.consumers import User
 
+callbacks = [User]

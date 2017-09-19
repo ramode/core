@@ -1,6 +1,8 @@
 if "__main__" in __name__:
-    import sys
-    sys.path.insert(0,'..')
+    import sys, os
+    cwd = os.path.dirname(__file__)
+    sys.path.insert(0,cwd)
+    sys.path.insert(0,os.path.join(cwd,'..'))
 
 import models
 
@@ -49,9 +51,9 @@ def bind(protocol):
         await channel.basic_consume(rpc(cb), queue_name=name)
     return bind_inner
 
-async def go():
 
-    models.psql_db.init('billing', host='127.0.0.1')
+async def go():
+    models.psql_db.init('billing', host='127.0.0.1', user='postgres')
 
     transport, protocol = await aioamqp.connect()
     binder = bind(protocol)
@@ -59,13 +61,20 @@ async def go():
     await binder(test_cb,"test")
 
     import callbacks
+    rpc = []
 
-    for modulename, module in filter(lambda x: type(x[1]) == types.ModuleType, callbacks.__dict__.items()):
-        for name,callback in filter(lambda x: type(x[1]) == types.FunctionType, module.__dict__.items()):
-            await binder(callback,"%s.%s" % (modulename, name))
+    for class_ in callbacks.callbacks:
+        cname = class_.__name__
+        holder = class_(class_)
 
+        for name in filter(lambda x: x[0] != '_' and type(getattr(holder,x)) == types.MethodType, dir(holder)):
+            print("register method rpc.%s.%s" % (cname, name))
+            callback = getattr(holder,name)
+            await binder(callback,"rpc.%s.%s" % (cname, name))
 
-    return transport, protocol
+        rpc.append(holder)
+
+    return transport, protocol, rpc
 
 
 if "__main__" in __name__:

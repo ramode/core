@@ -1,6 +1,6 @@
 uvloop
-peewee
+peewee-async
 pycrypto
-psycopg2
+aiopg
 aioamqp
 msgpack-python
