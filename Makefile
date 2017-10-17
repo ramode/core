@@ -1,4 +1,4 @@
-include ../run-billing-deploy/Makefile.vars
+include ../deploy/Makefile.vars
 
 SITE_FLAG=../var/core.site-packages
 
