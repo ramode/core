@@ -1,7 +1,7 @@
 import asyncio
 import uvloop
 import aioamqp
-import msgpack
+import umsgpack as msgpack
 import uuid
 
 
