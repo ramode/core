@@ -9,7 +9,7 @@ import models
 import asyncio
 import uvloop
 import aioamqp
-import msgpack
+import umsgpack as msgpack
 import string
 import types
 
