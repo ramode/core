@@ -3,4 +3,4 @@ peewee-async
 pycrypto
 aiopg
 aioamqp
-msgpack-python
+u-msgpack-python
